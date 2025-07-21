@@ -13,7 +13,7 @@ from recipes.models import (
 )
 from recipes.models import IngredientInRecipe
 from api.serializers import (
-    UserSerializer, UserCreateSerializer,
+    AvatarSerializer, UserSerializer, UserCreateSerializer,
     SubscriptionSerializer, SubscriptionUserSerializer,
     TagSerializer, IngredientSerializer,
     RecipeReadSerializer, RecipeWriteSerializer,
@@ -39,6 +39,24 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+    @action(detail=False, methods=['put', 'delete'], permission_classes=[IsAuthenticated])
+    def avatar(self, request):
+        user = request.user
+
+        if request.method == 'PUT':
+            serializer = AvatarSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        elif request.method == 'DELETE':
+            if user.avatar:
+                user.avatar.delete()
+                user.avatar = None
+                user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):

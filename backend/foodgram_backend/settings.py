@@ -132,12 +132,12 @@ DJOSER = {
     },
 }
 
-# EXTENSION_MIME_TYPE_XLSX = (
-    # 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-# )
+EXTENSION_MIME_TYPE_XLSX = (
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+)
 
 
-# DIRECTORY_FOR_SHOPING_LIST_FILE = 'recipes/data/'
+DIRECTORY_FOR_SHOPING_LIST_FILE = 'recipes/data/'
 
 # CORS_ALLOWED_ORIGINS = [
     # 'http://localhost',
