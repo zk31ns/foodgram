@@ -208,19 +208,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'image', 'text', 'cooking_time'
         )
 
-    def validate(self, data):
-        ingredients = data.get('ingredients')
-        if not ingredients:
-            raise serializers.ValidationError({
-                'ingredients': 'Нужно добавить хотя бы один ингредиент'
-            })
-        ingredient_ids = [item['id'] for item in ingredients]
-        if len(ingredient_ids) != len(set(ingredient_ids)):
-            raise serializers.ValidationError({
-                'ingredients': 'Ингредиенты не должны повторяться'
-            })
-        return data
-
     def create_ingredients(self, recipe, ingredients_data):
         for item in ingredients_data:
             IngredientInRecipe.objects.create(
@@ -244,6 +231,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.ingredientinrecipe_set.all().delete()
         self.create_ingredients(instance, ingredients_data)
         return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        """После создания/обновления возвращаем данные через RecipeReadSerializer"""
+        read_serializer = RecipeReadSerializer(instance, context=self.context)
+        return read_serializer.data
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
