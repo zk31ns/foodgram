@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.3'  # Можно оставить или удалить
 
 volumes:
   pg_data:
@@ -6,13 +6,12 @@ volumes:
   media:
 
 services:
-  
   db:
     image: postgres:13.10
     env_file: ../.env
     volumes:
       - pg_data:/var/lib/postgresql/data
-  
+
   backend:
     build: 
       context: ../backend
@@ -20,11 +19,19 @@ services:
     env_file: ../.env
     volumes:
       - static:/backend_static
-      - media:/media/
-      # - ../data:/app/data 
-    # depends_on:
-      # - db
-  
+      - media:/media
+      - ../data:/app/data
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        python manage.py wait_for_db &&
+        python manage.py migrate --noinput &&
+        python manage.py load &&
+        python manage.py collectstatic --noinput &&
+        gunicorn foodgram_backend.wsgi:application --bind 0.0.0.0:8000
+      "
+
   frontend:
     build:
       context: ../frontend
@@ -32,7 +39,7 @@ services:
     command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
-  
+
   nginx:
     image: nginx:1.25.4-alpine
     ports:
@@ -43,3 +50,5 @@ services:
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static:/staticfiles
       - media:/media
+    depends_on:
+      - backend
