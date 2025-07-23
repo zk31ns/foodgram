@@ -1,14 +1,9 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
+from recipes.views import recipe_short_link_redirect  # ← импортируем функцию
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
+    path('s/<int:pk>/', recipe_short_link_redirect, name='recipe-short-link'),
 ]
-
-# Добавляем медиа-файлы в DEBUG-режиме
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

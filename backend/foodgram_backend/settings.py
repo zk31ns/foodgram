@@ -18,7 +18,6 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
-    'corsheaders',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -145,3 +144,5 @@ EXTENSION_MIME_TYPE_XLSX = (
 DIRECTORY_FOR_SHOPING_LIST_FILE = 'recipes/data/'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# BASE_URL = 'http://localhost'

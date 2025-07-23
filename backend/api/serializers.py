@@ -233,9 +233,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        """После создания/обновления возвращаем данные через RecipeReadSerializer"""
-        read_serializer = RecipeReadSerializer(instance, context=self.context)
-        return read_serializer.data
+        return RecipeReadSerializer(instance, context=self.context).data
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
