@@ -32,6 +32,7 @@ class Base64ImageField(serializers.ImageField):
 
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()  # ← Замените поле
 
     class Meta:
         model = User
@@ -40,13 +41,18 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name', 'is_subscribed', 'avatar'
         )
 
+    def get_avatar(self, obj):
+        """Возвращает URL аватара или None."""
+        request = self.context.get('request')
+        if obj.avatar and request:
+            return request.build_absolute_uri(obj.avatar.url)
+        return None
+
     def get_is_subscribed(self, obj):
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
-        return Subscription.objects.filter(
-            user=request.user, author=obj
-        ).exists()
+        return Subscription.objects.filter(user=request.user, author=obj).exists()
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -266,3 +272,20 @@ class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('avatar',)
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Текущий пароль неверный")
+        return value
+
+    def validate_new_password(self, value):
+        user = self.context['request'].user
+        if user.check_password(value):
+            raise serializers.ValidationError("Новый пароль совпадает с текущим")
+        return value

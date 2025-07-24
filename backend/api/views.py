@@ -8,6 +8,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.viewsets import GenericViewSet
 
 from users.models import User, Subscription
 from recipes.models import (
@@ -30,6 +31,7 @@ from api.serializers import (
     RecipeWriteSerializer,
     RecipeShortSerializer,
     AvatarSerializer,
+    PasswordChangeSerializer,
 )
 from api.pagination import CustomPaginator
 from api.permissions import IsAuthorOrReadOnly, IsSelfOrReadOnly
@@ -124,24 +126,31 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def set_password(self, request):
+        """
+        Изменение пароля пользователя.
+        POST /api/users/set_password/
+        """
+        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            new_password = serializer.validated_data['new_password']
+            user.set_password(new_password)
+            user.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class SubscriptionViewSet(viewsets.ModelViewSet):
+
+class SubscriptionViewSet(GenericViewSet):
     """Вьюсет для подписок."""
     serializer_class = SubscriptionSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Subscription.objects.filter(user=self.request.user)
-
     def list(self, request, *args, **kwargs):
-        """Возвращает список пользователей, на которых подписан текущий пользователь."""
-        # Получаем подписки текущего пользователя
-        subscriptions = self.get_queryset()
-        # Получаем авторов, на которых он подписан
-        authors = User.objects.filter(
-            id__in=subscriptions.values_list('author_id', flat=True)
-        )
-        # Пагинация
+        subscriptions = Subscription.objects.filter(user=request.user)
+        author_ids = subscriptions.values_list('author_id', flat=True)
+        authors = User.objects.filter(id__in=author_ids)
         page = self.paginate_queryset(authors)
         if page is not None:
             serializer = SubscriptionUserSerializer(
