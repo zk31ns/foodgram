@@ -48,6 +48,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return UserCreateSerializer
+        elif self.action in ['subscribe', 'subscriptions']:
+            return SubscriptionUserSerializer  # ✅ Для подписок
         return UserSerializer
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
@@ -62,7 +64,9 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['put', 'delete'],
-        permission_classes=[IsAuthenticated]
+        permission_classes=[IsAuthenticated],
+        url_path='me/avatar',      # ← Ключевое изменение
+        url_name='me-avatar'       # ← Имя URL
     )
     def avatar(self, request):
         """Добавление или удаление аватара."""
