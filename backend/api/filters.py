@@ -27,15 +27,9 @@ class RecipeFilter(FilterSet):
 
 
 class IngredientSearchFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(method='filter_by_name')
+    name = django_filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:
         model = Ingredient
         fields = ['name']
 
-    def filter_by_name(self, queryset, name, value):
-        if not value:
-            return queryset
-        return queryset.filter(
-            Q(name__istartswith=value) | Q(name__icontains=value)
-        ).order_by('name')
