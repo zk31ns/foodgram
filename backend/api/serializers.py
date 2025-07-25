@@ -211,6 +211,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             'id', 'tags', 'ingredients', 'name',
             'image', 'text', 'cooking_time'
         )
+    
+    def validate(self, data):
+        ingredients = data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError({'ingredients': 'Нужно добавить хотя бы один ингредиент'})
+
+        ingredient_ids = [item['id'] for item in ingredients]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError({'ingredients': 'Ингредиенты не должны повторяться'})
+
+        return data
 
     def create_ingredients(self, recipe, ingredients_data):
         for item in ingredients_data:
@@ -229,12 +240,25 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        instance.tags.set(tags)
-        instance.ingredientinrecipe_set.all().delete()
-        self.create_ingredients(instance, ingredients_data)
-        return super().update(instance, validated_data)
+    # Извлекаем tags и ingredients, если они есть
+        tags_data = validated_data.pop('tags', None)
+        ingredients_data = validated_data.pop('ingredients', None)
+
+    # Обновляем основные поля
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+    # Обновляем теги, если переданы
+        if tags_data is not None:
+            instance.tags.set(tags_data)
+
+    # Обновляем ингредиенты, если переданы
+        if ingredients_data is not None:
+            instance.ingredientinrecipe_set.all().delete()
+            self.create_ingredients(instance, ingredients_data)
+
+        return instance
 
     def to_representation(self, instance):
         return RecipeReadSerializer(instance, context=self.context).data
