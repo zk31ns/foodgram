@@ -243,6 +243,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'tags': 'Нужно добавить хотя бы один тег.'
             })
+        
+        # Проверяем дубликаты тегов
+        tag_ids = [tag.id for tag in tags]
+        if len(tag_ids) != len(set(tag_ids)):
+            raise serializers.ValidationError({
+                'tags': 'Теги не должны повторяться.'
+            })
 
         return data
 
