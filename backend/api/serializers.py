@@ -250,6 +250,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'tags': 'Теги не должны повторяться.'
             })
+    
+        cooking_time = data.get('cooking_time')
+        if cooking_time is not None and cooking_time < 1:
+            raise serializers.ValidationError({
+                'cooking_time': 'Время приготовления должно быть не менее 1 минуты.'
+            })
 
         return data
 
