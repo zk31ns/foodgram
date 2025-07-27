@@ -199,31 +199,55 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для создания и обновления рецептов.
+    Принимает данные, валидирует их и создаёт/обновляет рецепт.
+    """
     image = Base64ImageField()
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True
+        queryset=Tag.objects.all(),
+        many=True
     )
     ingredients = IngredientInRecipeWriteSerializer(many=True)
 
     class Meta:
         model = Recipe
         fields = (
-            'id', 'tags', 'ingredients', 'name',
-            'image', 'text', 'cooking_time'
+            'id',
+            'tags',
+            'ingredients',
+            'name',
+            'image',
+            'text',
+            'cooking_time'
         )
-    
+
     def validate(self, data):
+        # Проверка: хотя бы один ингредиент
         ingredients = data.get('ingredients')
         if not ingredients:
-            raise serializers.ValidationError({'ingredients': 'Нужно добавить хотя бы один ингредиент'})
+            raise serializers.ValidationError({
+                'ingredients': 'Нужно добавить хотя бы один ингредиент.'
+            })
 
+        # Проверка: ингредиенты не должны повторяться
         ingredient_ids = [item['id'] for item in ingredients]
         if len(ingredient_ids) != len(set(ingredient_ids)):
-            raise serializers.ValidationError({'ingredients': 'Ингредиенты не должны повторяться'})
+            raise serializers.ValidationError({
+                'ingredients': 'Ингредиенты не должны повторяться.'
+            })
+
+        # ✅ Проверка: хотя бы один тег
+        tags = data.get('tags')
+        if not tags:
+            raise serializers.ValidationError({
+                'tags': 'Нужно добавить хотя бы один тег.'
+            })
 
         return data
 
     def create_ingredients(self, recipe, ingredients_data):
+        """Создаёт связь рецепта с ингредиентами."""
         for item in ingredients_data:
             IngredientInRecipe.objects.create(
                 recipe=recipe,
@@ -232,28 +256,32 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
 
     def create(self, validated_data):
+        """Создаёт новый рецепт."""
         ingredients_data = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
+        author = self.context['request'].user
+        validated_data.pop('author', None)
+
+        recipe = Recipe.objects.create(author=author, **validated_data)
         recipe.tags.set(tags)
         self.create_ingredients(recipe, ingredients_data)
         return recipe
 
     def update(self, instance, validated_data):
-    # Извлекаем tags и ingredients, если они есть
+        """Обновляет существующий рецепт."""
         tags_data = validated_data.pop('tags', None)
         ingredients_data = validated_data.pop('ingredients', None)
 
-    # Обновляем основные поля
+        # Обновляем основные поля
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-    # Обновляем теги, если переданы
+        # Обновляем теги
         if tags_data is not None:
             instance.tags.set(tags_data)
 
-    # Обновляем ингредиенты, если переданы
+        # Обновляем ингредиенты
         if ingredients_data is not None:
             instance.ingredientinrecipe_set.all().delete()
             self.create_ingredients(instance, ingredients_data)
@@ -261,6 +289,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
+        """Возвращает сериализованные данные для чтения (RecipeReadSerializer)."""
         return RecipeReadSerializer(instance, context=self.context).data
 
 
