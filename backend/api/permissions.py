@@ -15,18 +15,23 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         return obj.author == request.user
 
 
-class IsAdminOrReadOnly(permissions.BasePermission):
+class IsAuthorOrReadOnly(permissions.BasePermission):
     """
-    Разрешение: только администратор может создавать/редактировать/удалять.
+    Разрешение: безопасные методы для всех, остальные — только для авторизованных.
     """
 
     def has_permission(self, request, view):
-        # Разрешаем безопасные методы всем
+        # Все могут читать
         if request.method in permissions.SAFE_METHODS:
             return True
+        # Только авторизованные могут создавать
+        return request.user and request.user.is_authenticated
 
-        # Проверяем, является ли пользователь администратором
-        return request.user.is_staff
+    def has_object_permission(self, request, view, obj):
+        # Для изменения/удаления — только автор
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.author == request.user
 
 
 class IsSelfOrReadOnly(permissions.BasePermission):
