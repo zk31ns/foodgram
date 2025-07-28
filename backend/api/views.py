@@ -72,7 +72,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def avatar(self, request):
         """Добавление или удаление аватара."""
         user = request.user
+    
+        # Для PUT запроса - добавление/изменение аватара
         if request.method == 'PUT':
+            # Проверяем наличие поля 'avatar' в запросе
+            if 'avatar' not in request.data:
+                return Response(
+                    {'avatar': 'Это поле обязательно.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             serializer = AvatarSerializer(
                 user,
                 data=request.data,
@@ -89,7 +98,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if request.method == 'DELETE':
+        # Для DELETE запроса - удаление аватара
+        elif request.method == 'DELETE':
             if user.avatar:
                 user.avatar.delete()
                 user.avatar = None
@@ -237,9 +247,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update']:
             return RecipeWriteSerializer
         return RecipeReadSerializer
-
-    # def perform_create(self, serializer):
-        #vserializer.save(author=self.request.user)
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
