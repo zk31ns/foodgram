@@ -5,6 +5,9 @@ from recipes.models import Ingredient, Recipe
 
 
 class RecipeFilter(django_filters.FilterSet):
+    """
+    Фильтр рецептов по тегам, автору, избранному и списку покупок.
+    """
     tags = django_filters.CharFilter(method='filter_tags')
     is_favorited = django_filters.BooleanFilter(method='filter_is_favorited')
     is_in_shopping_cart = django_filters.BooleanFilter(
@@ -17,6 +20,7 @@ class RecipeFilter(django_filters.FilterSet):
         fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
 
     def filter_tags(self, queryset, name, value):
+        """Фильтрует рецепты по списку тегов."""
         print("=== filter_tags called ===")
         print("Tags from request:", self.request.query_params.getlist('tags'))
         tag_slugs = self.request.query_params.getlist('tags')
@@ -31,17 +35,22 @@ class RecipeFilter(django_filters.FilterSet):
         return queryset
 
     def filter_is_favorited(self, queryset, name, value):
+        """Фильтрует рецепты, добавленные в избранное."""
         if value and self.request.user.is_authenticated:
             return queryset.filter(recipe_favorites__user=self.request.user)
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
+        """Фильтрует рецепты, добавленные в список покупок."""
         if value and self.request.user.is_authenticated:
             return queryset.filter(in_shopping_cart__user=self.request.user)
         return queryset
 
 
 class IngredientSearchFilter(django_filters.FilterSet):
+    """
+    Фильтр ингредиентов по названию (поиск с начала слова).
+    """
     name = django_filters.CharFilter(lookup_expr='istartswith')
 
     class Meta:
