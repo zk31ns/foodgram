@@ -1,19 +1,23 @@
 # api/serializers.py
-import re
 import base64
+import re
 import uuid
-from django.core.files.base import ContentFile
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from users.models import Subscription
 from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientInRecipe,
-    Favorite, ShoppingCart
+    Favorite,
+    Ingredient,
+    IngredientInRecipe,
+    Recipe,
+    ShoppingCart,
+    Tag,
 )
+from users.models import Subscription
 
 User = get_user_model()
 

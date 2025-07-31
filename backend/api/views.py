@@ -1,42 +1,40 @@
 # api/views.py
-from django.shortcuts import get_object_or_404, redirect
-from django.http import HttpResponse
 from django.conf import settings
-from django.db.models import Sum, F
+from django.db.models import F, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
-
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from users.models import User, Subscription
-from recipes.models import (
-    Tag,
-    Ingredient,
-    Recipe,
-    Favorite,
-    ShoppingCart,
-    IngredientInRecipe,
-)
-
+from api.filters import IngredientSearchFilter, RecipeFilter
+from api.pagination import CustomPaginator
+from api.permissions import IsAuthorOrReadOnly, IsSelfOrReadOnly
 from api.serializers import (
-    UserSerializer,
-    UserCreateSerializer,
+    AvatarSerializer,
+    IngredientSerializer,
+    PasswordChangeSerializer,
+    RecipeReadSerializer,
+    RecipeShortSerializer,
+    RecipeWriteSerializer,
     SubscriptionSerializer,
     SubscriptionUserSerializer,
     TagSerializer,
-    IngredientSerializer,
-    RecipeReadSerializer,
-    RecipeWriteSerializer,
-    RecipeShortSerializer,
-    AvatarSerializer,
-    PasswordChangeSerializer,
+    UserCreateSerializer,
+    UserSerializer,
 )
-from api.pagination import CustomPaginator
-from api.permissions import IsAuthorOrReadOnly, IsSelfOrReadOnly
-from api.filters import RecipeFilter, IngredientSearchFilter
+from recipes.models import (
+    Favorite,
+    Ingredient,
+    IngredientInRecipe,
+    Recipe,
+    ShoppingCart,
+    Tag,
+)
+from users.models import Subscription, User
 
 
 class UserViewSet(viewsets.ModelViewSet):
