@@ -42,11 +42,16 @@ class Recipe(models.Model):
         verbose_name='Автор'
     )
     name = models.CharField('Название', max_length=200)
-    image = models.ImageField('Изображение', upload_to='recipes/', blank=True, null=True)
+    image = models.ImageField(
+        'Изображение', upload_to='recipes/', blank=True, null=True
+    )
     text = models.TextField('Описание')
     cooking_time = models.PositiveIntegerField('Время приготовления (мин)')
     tags = models.ManyToManyField(Tag, through='RecipeTag')
-    ingredients = models.ManyToManyField(Ingredient, through='IngredientInRecipe')
+    ingredients = models.ManyToManyField(
+        Ingredient,
+        through='IngredientInRecipe'
+    )
 
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
@@ -132,3 +137,4 @@ class ShoppingCart(models.Model):
                 name='unique_shopping_cart_recipe'
             )
         ]
+ 
