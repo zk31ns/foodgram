@@ -1,54 +1,40 @@
-version: '3.3'  # Можно оставить или удалить
-
 volumes:
   pg_data:
-  static:
+  backend_static:
   media:
 
 services:
   db:
-    image: postgres:13.10
-    env_file: ../.env
+    image: postgres:13
+    env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
-
   backend:
-    build: 
-      context: ../backend
-      dockerfile: Dockerfile
-    env_file: ../.env
+    build: ./backend/
+    env_file: .env
     volumes:
-      - static:/backend_static
-      - media:/media
-      - ../data:/app/data
+      - backend_static:/app/collect_static/
+      - media:/app/media/
+      - ./data:/app/data
     depends_on:
       - db
-    command: >
-      sh -c "
-        python manage.py wait_for_db &&
-        python manage.py migrate --noinput &&
-        python manage.py load &&
-        python manage.py collectstatic --noinput &&
-        gunicorn foodgram_backend.wsgi:application --bind 0.0.0.0:8000
-      "
-
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-    command: cp -r /app/build/. /frontend_static/
+    container_name: foodgram-front
+    env_file: .env
+    build: ./frontend/
     volumes:
-      - static:/frontend_static
+      - ./frontend/:/app/result_build/
 
-  nginx:
-    image: nginx:1.25.4-alpine
+  gateway:
+    build: ./nginx/
+    env_file: .env
     ports:
       - "80:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ../frontend/build:/usr/share/nginx/html/
-      - ../docs/:/usr/share/nginx/html/api/docs/
-      - static:/staticfiles
-      - media:/media
+      - backend_static:/staticfiles/static/
+      - media:/media/
+      - ./frontend/build:/usr/share/nginx/html/
+      - ./docs:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
+      - frontend

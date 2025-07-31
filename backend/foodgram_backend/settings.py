@@ -119,7 +119,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.CustomPaginator',
     'PAGE_SIZE': 6,
     'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',  # ← Ключевая строка
+        'django_filters.rest_framework.DjangoFilterBackend',
     ],
 }
 
@@ -135,16 +135,11 @@ DJOSER = {
         'user': ['rest_framework.permissions.IsAuthenticated'],
         'user_list': ['rest_framework.permissions.AllowAny'],
     },
-    'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',  # ← важно!
+    'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',
 }
 
 EXTENSION_MIME_TYPE_XLSX = (
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 )
 
-
-DIRECTORY_FOR_SHOPING_LIST_FILE = 'recipes/data/'
-
 CORS_ALLOW_ALL_ORIGINS = True
-
-# BASE_URL = 'http://localhost'
