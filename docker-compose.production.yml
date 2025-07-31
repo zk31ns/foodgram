@@ -1,0 +1,40 @@
+volumes:
+  pg_data_production:
+  backend_static:
+  media:
+
+services:
+  db:
+    image: postgres:13.10
+    env_file: .env
+    volumes:
+      - pg_data_production:/var/lib/postgresql/data
+  backend:
+    image: zk31ns/foodgram-backend
+    env_file: .env
+    volumes:
+      - backend_static:/app/collect_static/
+      - media:/app/media/
+      - ./data:/app/data
+    depends_on:
+      - db
+  frontend:
+    container_name: foodgram-front
+    env_file: .env
+    image: zk31ns/foodgram-frontend
+    volumes:
+      - ./frontend/:/app/result_build/
+
+  gateway:
+    image: zk31ns/foodgram-gateway
+    env_file: .env
+    ports:
+      - "8000:80"
+    volumes:
+      - backend_static:/staticfiles/static/
+      - media:/media/
+      - ./frontend/build:/usr/share/nginx/html/
+      - ./docs:/usr/share/nginx/html/api/docs/
+    depends_on:
+      - backend
+      - frontend
