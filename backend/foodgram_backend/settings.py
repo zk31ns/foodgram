@@ -141,5 +141,3 @@ DJOSER = {
 EXTENSION_MIME_TYPE_XLSX = (
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 )
-
-CORS_ALLOW_ALL_ORIGINS = True
