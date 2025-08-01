@@ -17,7 +17,9 @@ class Command(BaseCommand):
         file_path = os.path.join(settings.BASE_DIR, 'data', 'ingredients.csv')
 
         if not os.path.exists(file_path):
-            self.stdout.write(self.style.ERROR(f'Файл не найден: {file_path}'))
+            self.stdout.write(
+                self.style.ERROR(f'Файл не найден: {file_path}')
+            )
             return
 
         # Загрузка ингредиентов
@@ -27,13 +29,18 @@ class Command(BaseCommand):
             for row_num, row in enumerate(reader, start=1):
                 if len(row) != 2:
                     self.stdout.write(
-                        self.style.WARNING(f'Строка {row_num}: некорректное количество полей — {row}')
+                        self.style.WARNING(
+                            f'Строка {row_num}: некорректное количество полей '
+                            f'— {row}'
+                        )
                     )
                     continue
                 name, measurement_unit = [field.strip() for field in row]
                 if not name or not measurement_unit:
                     self.stdout.write(
-                        self.style.WARNING(f'Строка {row_num}: пустые поля — {row}')
+                        self.style.WARNING(
+                            f'Строка {row_num}: пустые поля — {row}'
+                        )
                     )
                     continue
                 ingredients_to_create.append(
@@ -51,7 +58,9 @@ class Command(BaseCommand):
                     created_count += 1
 
             self.stdout.write(
-                self.style.SUCCESS(f'✅ Успешно загружено ингредиентов: {created_count}')
+                self.style.SUCCESS(
+                    f'✅ Успешно загружено ингредиентов: {created_count}'
+                )
             )
 
         # Создание тегов
@@ -71,5 +80,7 @@ class Command(BaseCommand):
                 created_tags += 1
 
         self.stdout.write(
-            self.style.SUCCESS(f'✅ Успешно создано тегов: {created_tags}')
+            self.style.SUCCESS(
+                f'✅ Успешно создано тегов: {created_tags}'
+            )
         )
