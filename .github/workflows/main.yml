@@ -129,6 +129,7 @@ jobs:
             cd foodgram
             sudo docker compose -f docker-compose.production.yml pull
             sudo docker compose -f docker-compose.production.yml up -d
+            sudo docker compose -f docker-compose.production.yml run --rm backend python manage.py wait_for_db
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --noinput
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py load
