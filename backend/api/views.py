@@ -1,3 +1,4 @@
+from django.db import models
 from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -169,16 +170,29 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SubscriptionViewSet(GenericViewSet):
+class SubscriptionViewSet(viewsets.ModelViewSet):
     """Вьюсет для подписок."""
     serializer_class = SubscriptionSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        return User.objects.filter(
+            following__user=user
+        ).annotate(
+            recipes_count=models.Count('recipes', distinct=True),
+            is_subscribed=models.Exists(
+                Subscription.objects.filter(
+                    user=user,
+                    author=models.OuterRef('pk')
+                )
+            )
+        ).prefetch_related('recipes')
+
     def list(self, request, *args, **kwargs):
-        subscriptions = Subscription.objects.filter(user=request.user)
-        author_ids = subscriptions.values_list('author_id', flat=True)
-        authors = User.objects.filter(id__in=author_ids)
-        page = self.paginate_queryset(authors)
+        """Возвращает список авторов, на которых подписан пользователь."""
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = SubscriptionUserSerializer(
                 page,
@@ -188,7 +202,7 @@ class SubscriptionViewSet(GenericViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = SubscriptionUserSerializer(
-            authors,
+            queryset,
             many=True,
             context={'request': request}
         )
