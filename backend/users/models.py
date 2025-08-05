@@ -1,25 +1,41 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.validators import UnicodeUsernameValidator
+
+from users.constants import (
+    EMAIL_MAX_LENGTH,
+    USERNAME_MAX_LENGTH,
+    FIRST_NAME_MAX_LENGTH,
+    LAST_NAME_MAX_LENGTH,
+)
 
 
 class User(AbstractUser):
     email = models.EmailField(
         'Электронная почта',
-        max_length=254,
+        max_length=EMAIL_MAX_LENGTH,
         unique=True
     )
     username = models.CharField(
         'Имя пользователя',
-        max_length=150,
-        unique=True
+        max_length=USERNAME_MAX_LENGTH,
+        unique=True,
+        validators=[UnicodeUsernameValidator()],
+        help_text=(
+            'Обязательное поле. Не более 150 символов. '
+            'Буквы, цифры и @/./+/-/_ только.'
+        ),
+        error_messages={
+            'unique': 'Пользователь с таким именем уже существует.',
+        }
     )
-    first_name = models.CharField('Имя', max_length=150)
-    last_name = models.CharField('Фамилия', max_length=150)
+    first_name = models.CharField('Имя', max_length=FIRST_NAME_MAX_LENGTH)
+    last_name = models.CharField('Фамилия', max_length=LAST_NAME_MAX_LENGTH)
     avatar = models.ImageField(
         'Аватар',
         upload_to='avatars/',
-        null=True,
-        blank=True
+        blank=True,
+        default='',
     )
 
     USERNAME_FIELD = 'email'
@@ -37,13 +53,13 @@ class Subscription(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscriber',
+        related_name='following',
         verbose_name='Подписчик'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscribed',
+        related_name='followers',
         verbose_name='Автор'
     )
 
