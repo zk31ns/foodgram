@@ -1,4 +1,5 @@
-from django.db import models, F, Sum
+from django.db import models
+from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
