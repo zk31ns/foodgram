@@ -175,15 +175,10 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         elif request.method == 'DELETE':
-            deleted, _ = Subscription.objects.filter(
+            Subscription.objects.filter(
                 user=user,
                 author=author
             ).delete()
-            if not deleted:
-                return Response(
-                    {'errors': 'Вы не были подписаны на этого пользователя'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(

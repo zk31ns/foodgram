@@ -1,12 +1,22 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
-from users.models import User
+from recipes.constants import (
+    TAG_NAME_MAX_LENGTH,
+    INGREDIENT_NAME_MAX_LENGTH,
+    MEASUREMENT_UNIT_MAX_LENGTH,
+)
+
+User = get_user_model()
 
 
 class Tag(models.Model):
-    name = models.CharField('Название', max_length=200, unique=True)
-    color = models.CharField('Цвет', max_length=7, unique=True)
-    slug = models.SlugField('Слаг', max_length=200, unique=True)
+    name = models.CharField(
+        'Название', max_length=TAG_NAME_MAX_LENGTH, unique=True
+    )
+    slug = models.SlugField(
+        'Слаг', max_length=TAG_NAME_MAX_LENGTH, unique=True
+    )
 
     class Meta:
         verbose_name = 'Тег'
@@ -17,8 +27,10 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField('Название', max_length=200)
-    measurement_unit = models.CharField('Единица измерения', max_length=200)
+    name = models.CharField('Название', max_length=INGREDIENT_NAME_MAX_LENGTH)
+    measurement_unit = models.CharField(
+        'Единица измерения', max_length=MEASUREMENT_UNIT_MAX_LENGTH
+    )
 
     class Meta:
         verbose_name = 'Ингредиент'
@@ -41,13 +53,13 @@ class Recipe(models.Model):
         related_name='recipes',
         verbose_name='Автор'
     )
-    name = models.CharField('Название', max_length=200)
+    name = models.CharField('Название', max_length=TAG_NAME_MAX_LENGTH)
     image = models.ImageField(
         'Изображение', upload_to='recipes/', blank=True, null=True
     )
     text = models.TextField('Описание')
     cooking_time = models.PositiveIntegerField('Время приготовления (мин)')
-    tags = models.ManyToManyField(Tag, through='RecipeTag')
+    tags = models.ManyToManyField(Tag)
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientInRecipe'
@@ -62,19 +74,6 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class RecipeTag(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['recipe', 'tag'],
-                name='unique_recipe_tag'
-            )
-        ]
 
 
 class IngredientInRecipe(models.Model):
@@ -93,47 +92,38 @@ class IngredientInRecipe(models.Model):
         ]
 
 
-class Favorite(models.Model):
+class UserRecipeRelation(models.Model):
+    """Абстрактная базовая модель для связей пользователь-рецепт."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='user_favorites'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_favorites'
     )
 
     class Meta:
+        abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_%(class)s_recipe'
+            )
+        ]
+
+
+class Favorite(UserRecipeRelation):
+    """Модель для избранных рецептов."""
+
+    class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_favorite_recipe'
-            )
-        ]
 
 
-class ShoppingCart(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='in_shopping_cart'
-    )
+class ShoppingCart(UserRecipeRelation):
+    """Модель для списка покупок."""
 
-    class Meta:
+    class Meta(UserRecipeRelation.Meta):
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'],
-                name='unique_shopping_cart_recipe'
-            )
-        ]
