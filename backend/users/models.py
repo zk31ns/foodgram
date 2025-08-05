@@ -3,10 +3,10 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from users.constants import (
-    EMAIL_MAX_LENGTH,
-    USERNAME_MAX_LENGTH,
     FIRST_NAME_MAX_LENGTH,
+    EMAIL_MAX_LENGTH,
     LAST_NAME_MAX_LENGTH,
+    USERNAME_MAX_LENGTH,
 )
 
 
