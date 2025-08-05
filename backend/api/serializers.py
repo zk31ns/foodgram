@@ -174,7 +174,9 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
             recipes_limit = DEFAULT_RECIPES_LIMIT
 
         recipes = obj.recipes.all()[:recipes_limit]
-        return RecipeShortSerializer(recipes, many=True, context=self.context).data
+        return RecipeShortSerializer(
+            recipes, many=True, context=self.context
+        ).data
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -351,9 +353,23 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(BaseUserRecipeSerializer):
-    """Сериализатор для добавления/удаления рецепта из избранного."""
+    """
+    Сериализатор для добавления/удаления рецепта из избранного.
+    Используется в RecipeViewSet.favorite для валидации и создания.
+    """
     class Meta(BaseUserRecipeSerializer.Meta):
         model = Favorite
+
+    def validate(self, data):
+        user = data['user']
+        recipe = data['recipe']
+
+        if Favorite.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в избранное'
+            )
+
+        return data
 
 
 class ShoppingCartSerializer(BaseUserRecipeSerializer):
@@ -364,7 +380,12 @@ class ShoppingCartSerializer(BaseUserRecipeSerializer):
 
 class AvatarSerializer(serializers.ModelSerializer):
     """Сериализатор для загрузки и удаления аватара пользователя."""
-    avatar = Base64ImageField(required=True)
+    avatar = Base64ImageField(
+        required=True,
+        error_messages={
+            'required': 'Поле "avatar" обязательно для заполнения.'
+        }
+    )
 
     class Meta:
         model = User
@@ -391,3 +412,25 @@ class PasswordChangeSerializer(serializers.Serializer):
                 "Новый пароль совпадает с текущим"
             )
         return value
+
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания подписки."""
+    class Meta:
+        model = Subscription
+        fields = ('user', 'author')
+
+    def validate(self, data):
+        user = data['user']
+        author = data['author']
+
+        if user == author:
+            raise ValidationError('Нельзя подписаться на себя')
+
+        if Subscription.objects.filter(user=user, author=author).exists():
+            raise ValidationError('Вы уже подписаны на этого пользователя')
+
+        return data
+
+    def create(self, validated_data):
+        return Subscription.objects.create(**validated_data)
