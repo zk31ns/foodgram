@@ -21,17 +21,12 @@ class RecipeFilter(django_filters.FilterSet):
 
     def filter_tags(self, queryset, name, value):
         """Фильтрует рецепты по списку тегов."""
-        print("=== filter_tags called ===")
-        print("Tags from request:", self.request.query_params.getlist('tags'))
         tag_slugs = self.request.query_params.getlist('tags')
         if tag_slugs:
             q_objects = Q()
             for slug in tag_slugs:
-                print("Filtering by tag:", slug)
                 q_objects |= Q(tags__slug=slug)
-            result = queryset.filter(q_objects).distinct()
-            print("Filtered count:", result.count())
-            return result
+            return queryset.filter(q_objects).distinct()
         return queryset
 
     def filter_is_favorited(self, queryset, name, value):
