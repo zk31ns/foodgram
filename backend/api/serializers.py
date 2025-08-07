@@ -312,12 +312,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, recipe, ingredients_data):
         """Создаёт связь рецепта с ингредиентами."""
+        ingredients = []
         for item in ingredients_data:
-            IngredientInRecipe.objects.create(
-                recipe=recipe,
-                ingredient=item['id'],
-                amount=item['amount']
+            ingredient = get_object_or_404(Ingredient, id=item['id'])
+            ingredients.append(
+                IngredientInRecipe(
+                    recipe=recipe,
+                    ingredient=ingredient,
+                    amount=item['amount']
+                )
             )
+        IngredientInRecipe.objects.bulk_create(ingredients)
 
     def create(self, validated_data):
         """Создаёт новый рецепт."""
