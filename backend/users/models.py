@@ -35,7 +35,7 @@ class User(AbstractUser):
         'Аватар',
         upload_to='avatars/',
         blank=True,
-        default='',
+        null=True,
     )
 
     USERNAME_FIELD = 'email'
