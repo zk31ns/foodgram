@@ -69,6 +69,10 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name', 'is_subscribed', 'avatar'
         )
 
+        extra_kwargs = {
+            'is_subscribed': {'read_only': True},
+        }
+
     def get_is_subscribed(self, obj):
         """Возвращает True, если текущий пользователь подписан на obj."""
         request = self.context.get('request')
@@ -153,9 +157,7 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 class SubscriptionUserSerializer(serializers.ModelSerializer):
     """Пользователь с рецептами и количеством подписок."""
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.IntegerField(read_only=True)
-    is_subscribed = serializers.BooleanField(read_only=True)
+    recipes = RecipeShortSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -163,6 +165,11 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
             'id', 'email', 'username', 'first_name', 'last_name',
             'is_subscribed', 'recipes', 'recipes_count', 'avatar'
         )
+
+        extra_kwargs = {
+            'is_subscribed': {'read_only': True},
+            'recipes_count': {'read_only': True},
+        }
 
     def get_recipes(self, obj):
         request = self.context.get('request')
