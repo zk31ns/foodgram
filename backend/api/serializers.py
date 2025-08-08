@@ -288,6 +288,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 'ingredients': 'Ингредиенты не должны повторяться.'
             })
 
+        existing_ids = Ingredient.objects.filter(
+            id__in=ingredient_ids
+        ).values_list('id', flat=True)
+        if len(existing_ids) != len(ingredient_ids):
+            invalid_ids = set(ingredient_ids) - set(existing_ids)
+            raise serializers.ValidationError({
+                'ingredients': (
+                    f'Ингредиенты с ID {list(invalid_ids)} '
+                    'не существуют.'
+                )
+            })
+
         tags = data.get('tags')
         if not tags:
             raise serializers.ValidationError({
