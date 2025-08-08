@@ -194,9 +194,9 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class IngredientInRecipeWriteSerializer(serializers.ModelSerializer):
+class IngredientInRecipeWriteSerializer(serializers.Serializer):
     """Сериализатор для записи ингредиентов в рецепт."""
-    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+    id = serializers.IntegerField()
     amount = serializers.IntegerField(min_value=1)
 
     class Meta:
@@ -240,14 +240,14 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
-        return obj.recipe_favorites.filter(user=request.user).exists()
+        return obj.favorite_related.filter(user=request.user).exists()
 
     def get_is_in_shopping_cart(self, obj):
         """True, если рецепт в списке покупок у текущего пользователя."""
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
             return False
-        return obj.in_shopping_cart.filter(user=request.user).exists()
+        return obj.shoppingcart_related.filter(user=request.user).exists()
 
 
 class RecipeWriteSerializer(serializers.ModelSerializer):
@@ -276,13 +276,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         """Проверяет данные: ингредиенты, теги, время приготовления."""
-        ingredients = data.get('ingredients')
-        if not ingredients:
+        ingredients_data = data.get('ingredients')
+        if not ingredients_data:
             raise ValidationError({
                 'ingredients': 'Нужно добавить хотя бы один ингредиент.'
             })
 
-        ingredient_ids = [item['id'] for item in ingredients]
+        ingredient_ids = [item['id'] for item in ingredients_data]
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError({
                 'ingredients': 'Ингредиенты не должны повторяться.'
@@ -313,17 +313,13 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, recipe, ingredients_data):
         """Создаёт связь рецепта с ингредиентами."""
-        ingredients = []
         for item in ingredients_data:
             ingredient = get_object_or_404(Ingredient, id=item['id'])
-            ingredients.append(
-                IngredientInRecipe(
-                    recipe=recipe,
-                    ingredient=ingredient,
-                    amount=item['amount']
-                )
+            IngredientInRecipe.objects.create(
+                recipe=recipe,
+                ingredient=ingredient,
+                amount=item['amount']
             )
-        IngredientInRecipe.objects.bulk_create(ingredients)
 
     def create(self, validated_data):
         """Создаёт новый рецепт."""

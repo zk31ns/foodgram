@@ -97,10 +97,12 @@ class UserRecipeRelation(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='%(class)s_related'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='%(class)s_related'
     )
 
     class Meta:
