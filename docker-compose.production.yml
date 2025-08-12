@@ -2,6 +2,7 @@ volumes:
   pg_data_production:
   backend_static:
   media:
+  frontend_static:
 
 services:
   db:
@@ -9,6 +10,7 @@ services:
     env_file: .env
     volumes:
       - pg_data_production:/var/lib/postgresql/data
+
   backend:
     image: zk31ns/foodgram-backend
     env_file: .env
@@ -17,7 +19,7 @@ services:
       - media:/app/media/
       - ./data:/app/data
     depends_on:
-    - db
+      - db
     command: >
       sh -c "
         python manage.py wait_for_db &&
@@ -26,12 +28,13 @@ services:
         python manage.py collectstatic --noinput &&
         gunicorn foodgram_backend.wsgi:application --bind 0.0.0.0:8000
       "
+
   frontend:
     container_name: foodgram-front
     env_file: .env
     image: zk31ns/foodgram-frontend
     volumes:
-      - ./frontend/:/app/result_build/
+      - frontend_static:/app/result_build/
 
   gateway:
     image: zk31ns/foodgram-gateway
@@ -39,10 +42,9 @@ services:
     ports:
       - "8000:80"
     volumes:
-      - backend_static:/staticfiles/static/
-      - media:/media/
-      - ./frontend/build:/usr/share/nginx/html/
+      - frontend_static:/usr/share/nginx/html/
+      - backend_static:/staticfiles
+      - media:/media
       - ./docs:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
-      - frontend
