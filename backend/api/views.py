@@ -20,6 +20,7 @@ from api.serializers import (
     RecipeReadSerializer,
     RecipeShortSerializer,
     RecipeWriteSerializer,
+    SubscriptionSerializer,
     SubscriptionUserSerializer,
     ShoppingCartSerializer,
     TagSerializer,
@@ -153,30 +154,35 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         if request.method == 'POST':
-            subscription, created = Subscription.objects.get_or_create(
-                user=user,
-                author=author
+            # Используем сериализатор
+            serializer = SubscriptionSerializer(
+                data={'user': user.id, 'author': author.id},
+                context={'request': request}
             )
-            if not created:
-                return Response(
-                    {'errors': 'Вы уже подписаны на этого пользователя'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            annotated_author = User.objects.annotate(
-                recipes_count=models.Count('recipes', distinct=True),
-                is_subscribed=models.Exists(
-                    Subscription.objects.filter(
-                        user=user,
-                        author=models.OuterRef('pk')
+            if serializer.is_valid():
+                serializer.save()
+                # Аннотируем автора
+                annotated_author = User.objects.annotate(
+                    recipes_count=models.Count('recipes', distinct=True),
+                    is_subscribed=models.Exists(
+                        Subscription.objects.filter(
+                            user=user,
+                            author=models.OuterRef('pk')
+                        )
                     )
+                ).get(pk=author.pk)
+                response_serializer = SubscriptionUserSerializer(
+                    annotated_author,
+                    context={'request': request}
                 )
-            ).get(pk=author.pk)
-
-            serializer = SubscriptionUserSerializer(
-                annotated_author, context={'request': request}
+                return Response(
+                    response_serializer.data,
+                    status=status.HTTP_201_CREATED
+                )
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
             )
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
             deleted, _ = Subscription.objects.filter(
