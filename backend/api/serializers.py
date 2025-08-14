@@ -173,8 +173,10 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         request = self.context.get('request')
-        limit = request.query_params.get('recipes_limit')
+        if not request:
+            return []
 
+        limit = request.query_params.get('recipes_limit')
         try:
             recipes_limit = int(limit) if limit else DEFAULT_RECIPES_LIMIT
             recipes_limit = max(1, recipes_limit)
@@ -183,7 +185,7 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
 
         recipes = obj.recipes.all()[:recipes_limit]
         return RecipeShortSerializer(
-            recipes, many=True, context=self.context
+            recipes, many=True, context={'request': request}
         ).data
 
 
@@ -435,23 +437,23 @@ class PasswordChangeSerializer(serializers.Serializer):
         return value
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания подписки."""
-    class Meta:
-        model = Subscription
-        fields = ('user', 'author')
+# class SubscribeSerializer(serializers.ModelSerializer):
+#     """Сериализатор для создания подписки."""
+#     class Meta:
+#         model = Subscription
+#         fields = ('user', 'author')
 
-    def validate(self, data):
-        user = data['user']
-        author = data['author']
+#     def validate(self, data):
+#         user = data['user']
+#         author = data['author']
 
-        if user == author:
-            raise ValidationError('Нельзя подписаться на себя')
+#         if user == author:
+#             raise ValidationError('Нельзя подписаться на себя')
 
-        if Subscription.objects.filter(user=user, author=author).exists():
-            raise ValidationError('Вы уже подписаны на этого пользователя')
+#         if Subscription.objects.filter(user=user, author=author).exists():
+#             raise ValidationError('Вы уже подписаны на этого пользователя')
 
-        return data
+#         return data
 
-    def create(self, validated_data):
-        return Subscription.objects.create(**validated_data)
+#     def create(self, validated_data):
+#         return Subscription.objects.create(**validated_data)
