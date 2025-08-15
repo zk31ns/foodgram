@@ -19,6 +19,13 @@ class RecipeFilter(django_filters.FilterSet):
         model = Recipe
         fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
 
+    def filter_queryset(self, queryset):
+        """Явно применяем фильтры в нужном порядке."""
+        queryset = super().filter_queryset(queryset)
+        if 'is_favorited' in self.data and self.data['is_favorited'] == '1' and self.request.user.is_authenticated:
+            queryset = queryset.filter(favorite_related__user=self.request.user).distinct()
+        return queryset
+
     def filter_tags(self, queryset, name, value):
         """Фильтрует рецепты по списку тегов."""
         tag_slugs = self.request.query_params.getlist('tags')
