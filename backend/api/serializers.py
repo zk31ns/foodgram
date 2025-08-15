@@ -158,6 +158,8 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 class SubscriptionUserSerializer(serializers.ModelSerializer):
     """Пользователь с рецептами и количеством подписок."""
     recipes = RecipeShortSerializer(many=True, read_only=True)
+    is_subscribed = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True)  # ← Объявлено явно
 
     class Meta:
         model = User
@@ -166,27 +168,14 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
             'is_subscribed', 'recipes', 'recipes_count', 'avatar'
         )
 
-        extra_kwargs = {
-            'is_subscribed': {'read_only': True},
-            'recipes_count': {'read_only': True},
-        }
-
-    def get_recipes(self, obj):
+    def get_is_subscribed(self, obj):
         request = self.context.get('request')
-        if not request:
-            return []
-
-        limit = request.query_params.get('recipes_limit')
-        try:
-            recipes_limit = int(limit) if limit else DEFAULT_RECIPES_LIMIT
-            recipes_limit = max(1, recipes_limit)
-        except (ValueError, TypeError):
-            recipes_limit = DEFAULT_RECIPES_LIMIT
-
-        recipes = obj.recipes.all()[:recipes_limit]
-        return RecipeShortSerializer(
-            recipes, many=True, context={'request': request}
-        ).data
+        if not request or request.user.is_anonymous:
+            return False
+        return Subscription.objects.filter(
+            user=request.user,
+            author=obj
+        ).exists()
 
 
 class TagSerializer(serializers.ModelSerializer):
