@@ -9,7 +9,6 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from api.constants import DEFAULT_RECIPES_LIMIT
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -159,7 +158,7 @@ class SubscriptionUserSerializer(serializers.ModelSerializer):
     """Пользователь с рецептами и количеством подписок."""
     recipes = RecipeShortSerializer(many=True, read_only=True)
     is_subscribed = serializers.SerializerMethodField()
-    recipes_count = serializers.IntegerField(read_only=True)  # ← Объявлено явно
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
