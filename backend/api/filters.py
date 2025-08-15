@@ -24,6 +24,9 @@ class RecipeFilter(django_filters.FilterSet):
         queryset = super().filter_queryset(queryset)
         if 'is_favorited' in self.data and self.data['is_favorited'] == '1' and self.request.user.is_authenticated:
             queryset = queryset.filter(favorite_related__user=self.request.user).distinct()
+        if 'is_in_shopping_cart' in self.data and self.data[
+            'is_in_shopping_cart'] == '1' and self.request.user.is_authenticated:
+            queryset = queryset.filter(shoppingcart_related__user=self.request.user).distinct()
         return queryset
 
     def filter_tags(self, queryset, name, value):
