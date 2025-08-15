@@ -5,11 +5,11 @@ from recipes.models import Ingredient, Recipe
 
 
 class RecipeFilter(django_filters.FilterSet):
-    """
-    Фильтр рецептов по тегам, автору, избранному и списку покупок.
-    """
+    """Фильтр рецептов по тегам, автору, избранному и списку покупок."""
     tags = django_filters.CharFilter(method='filter_tags')
-    is_favorited = django_filters.BooleanFilter(method='filter_is_favorited')
+    is_favorited = django_filters.BooleanFilter(
+        method='filter_is_favorited'
+    )
     is_in_shopping_cart = django_filters.BooleanFilter(
         method='filter_is_in_shopping_cart'
     )
@@ -17,16 +17,29 @@ class RecipeFilter(django_filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = ['tags', 'author', 'is_favorited', 'is_in_shopping_cart']
+        fields = [
+            'tags',
+            'author',
+            'is_favorited',
+            'is_in_shopping_cart'
+        ]
 
     def filter_queryset(self, queryset):
         """Явно применяем фильтры в нужном порядке."""
         queryset = super().filter_queryset(queryset)
-        if 'is_favorited' in self.data and self.data['is_favorited'] == '1' and self.request.user.is_authenticated:
-            queryset = queryset.filter(favorite_related__user=self.request.user).distinct()
-        if 'is_in_shopping_cart' in self.data and self.data[
-            'is_in_shopping_cart'] == '1' and self.request.user.is_authenticated:
-            queryset = queryset.filter(shoppingcart_related__user=self.request.user).distinct()
+
+        is_fav = self.data.get('is_favorited') == '1'
+        if is_fav and self.request.user.is_authenticated:
+            queryset = queryset.filter(
+                favorite_related__user=self.request.user
+            ).distinct()
+
+        is_in_cart = self.data.get('is_in_shopping_cart') == '1'
+        if is_in_cart and self.request.user.is_authenticated:
+            queryset = queryset.filter(
+                shoppingcart_related__user=self.request.user
+            ).distinct()
+
         return queryset
 
     def filter_tags(self, queryset, name, value):
