@@ -423,25 +423,3 @@ class PasswordChangeSerializer(serializers.Serializer):
                 "Новый пароль совпадает с текущим"
             )
         return value
-
-
-# class SubscribeSerializer(serializers.ModelSerializer):
-#     """Сериализатор для создания подписки."""
-#     class Meta:
-#         model = Subscription
-#         fields = ('user', 'author')
-
-#     def validate(self, data):
-#         user = data['user']
-#         author = data['author']
-
-#         if user == author:
-#             raise ValidationError('Нельзя подписаться на себя')
-
-#         if Subscription.objects.filter(user=user, author=author).exists():
-#             raise ValidationError('Вы уже подписаны на этого пользователя')
-
-#         return data
-
-#     def create(self, validated_data):
-#         return Subscription.objects.create(**validated_data)
