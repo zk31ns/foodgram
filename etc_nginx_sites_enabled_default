@@ -1,32 +1,60 @@
 server {
-    server_name 51.250.101.208  fudo.ddns.net;
-
-
-    location / {
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_pass http://127.0.0.1:8000;
-        client_max_body_size 50M;
-    }
-
-
     listen 443 ssl;
-    # SSL-сертификаты (управляются Certbot)
+    server_name 51.250.101.208 fudo.ddns.net;
+
     ssl_certificate /etc/letsencrypt/live/fudo.ddns.net/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/fudo.ddns.net/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-}
 
+    # Заголовки
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 
-server {
-    if ($host = fudo.ddns.net) {
-        return 301 https://$host$request_uri;
+    # Прокси для API
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_redirect off;
     }
 
+    # Админка Django
+    location /admin/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_redirect off;
+    }
+
+    # Статика
+    location /static/ {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    location /media/ {
+        proxy_pass http://127.0.0.1:8000;
+    }
+
+    # Фронтенд (React/Vue и т.п.)
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    client_max_body_size 50M;
+}
+
+# Редирект HTTP → HTTPS
+server {
     listen 80;
-    server_name 51.250.101.208  fudo.ddns.net;
-    return 404;
+    server_name 51.250.101.208 fudo.ddns.net;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
