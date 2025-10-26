@@ -1,5 +1,3 @@
-[![Foodgram workflow]
-
 #  Проект Foodgram
 
 ## Описание проекта
